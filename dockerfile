@@ -1,5 +1,5 @@
 # Stage 1: Builder Stage
-FROM debian:stable-slim AS builder
+FROM debian:stable AS builder
 
 # Install necessary packages
 RUN apt-get update && \
@@ -17,7 +17,7 @@ COPY ./public-html/ /var/www/html/
 RUN chown -R www-data:www-data /var/www/html
 
 # Stage 2: Production Stage
-FROM debian:stable-slim
+FROM debian:stable
 
 # Install minimal packages
 RUN apt-get update && \
@@ -40,11 +40,4 @@ RUN chown -R www-data:www-data /var/www/html
 # Expose port 80
 EXPOSE 80
 
-# Healthcheck to monitor the server status
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -f http://localhost/ || exit 1
-
-# Start Apache in the foreground
-CMD ["apache2ctl", "-D", "FOREGROUND"]
-
-LABEL name="project"
+CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]

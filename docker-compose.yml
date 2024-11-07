@@ -21,8 +21,9 @@ services:
       - ./public-html/:/var/www/html/
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`localhost`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.rule=Host(`web.local`)"
+      #- "traefik.http.routers.web.entrypoints=websecure"
+      - "traefik.http.routers.web.entrypoints=web"
       - "traefik.http.services.web.loadbalancer.server.port=80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]
@@ -58,23 +59,18 @@ services:
   traefik:
     image: traefik:v3.0
     command:
-      - --providers.docker
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --api.dashboard=true
-      - --api.insecure=true
-      - --log.level=INFO
-      - --certificatesresolvers.selfsigned.acme.tlschallenge=true
-      - --certificatesresolvers.selfsigned.acme.email=zineddine.y.berrichi@gmail.com  # Replace with your actual email
-      - --certificatesresolvers.selfsigned.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      - "--configFile=/traefik/traefik.yml"
+    labels:
+      - "traefik.http.routers.api.rule=Host(`localhost`)"
+      - "traefik.http.routers.api.service=api@internal"
+      - "traefik.http.routers.api.entrypoints=web"
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"  # Traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/traefik.yml
+      - ./traefik/traefik.yml:/traefik/traefik.yml
       - ./traefik/acme.json:/acme.json
     networks:
       - webnet
@@ -82,7 +78,7 @@ services:
 networks:
   webnet:
     driver: bridge
-
+    external: true
 volumes:
   db_data:
 
