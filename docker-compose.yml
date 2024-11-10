@@ -52,9 +52,10 @@ services:
       - "traefik.enable=false"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   traefik:
     image: traefik:v3.0
