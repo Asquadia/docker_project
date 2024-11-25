@@ -5,7 +5,7 @@
 # more research are needed
 tls:
   certificates:
-    - certFile: run/secrets/certs/localhost_crt
-      keyFile: run/secrets/certs/localhost_key
+    - certFile: /run/secrets/localhost_crt
+      keyFile: /run/secrets/localhost_key
       stores:
         - default
