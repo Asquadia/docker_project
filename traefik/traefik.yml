@@ -1,18 +1,21 @@
-
+# disable them in the release stage
+# as the "end user" should not have access to the dashboard
 api:
   dashboard: true
   insecure: true
-
+# the entry point of the webapp and his port, maybe change to something else ? as in windows 80 is reserverd from the information i have
 entryPoints:
   web:
     address: ":80"
     http:
+      # make a propper redirection to websecure, in some sort of middle ware if my understanding of the documentation is correct to https
       redirections:
         entryPoint:
           to: websecure
           scheme: https
   websecure:
     address: ":443"
+  # traefik port dashboard
   traefik:
     address: ":8080"
 

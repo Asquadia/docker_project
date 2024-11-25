@@ -1,4 +1,5 @@
 services:
+  # the webapp
   web:
     build:
       context: .
@@ -6,8 +7,10 @@ services:
     image: my_web_image
     depends_on:
       db:
+    # we make sure to start the web service only if the database started healthy
         condition: service_healthy
     networks:
+    # connect to the docker network webnet so they can be communication from the DB, apache server and the riverse proxy (traefik)
       - webnet
     environment:
       MYSQL_HOST: db
@@ -15,9 +18,11 @@ services:
       MYSQL_USER_FILE: /run/secrets/db_user
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
     secrets:
+      # use of the docker secret as per the projecr requirement
       - db_user
       - db_password
     volumes:
+    # need to mount the html page
       - ./public-html/:/var/www/html/
     labels:
       - "traefik.enable=true"
@@ -63,14 +68,16 @@ services:
     command:
       - "--configFile=/traefik/traefik.yml"
     ports:
-      - "80:80"
-      - "443:443"
+      - "80:80" # web service
+      - "443:443" # https part
       - "8080:8080"  # Traefik dashboard
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/traefik/traefik.yml
       - ./traefik/dynamic.yml:/traefik/dynamic.yml
-      - ./traefik/certs:/certs
+    secrets:
+      - localhost_crt
+      - localhost_key
     networks:
       - webnet
 
@@ -88,3 +95,7 @@ secrets:
     file: ./secrets/db_user.txt
   db_password:
     file: ./secrets/db_password.txt
+  localhost_crt:
+    file: ./secrets/certs/localhost.crt
+  localhost_key:
+    file: ./secrets/certs/localhost.key
