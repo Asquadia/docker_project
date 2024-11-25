@@ -17,6 +17,7 @@ if (!isset($_POST['username']) || !isset($_POST['password'])) {
             Password: <input type="password" name="password" required><br><br>
             <input type="submit" value="Login">
         </form>
+        <p>Don't have an account? <a href="register.php">Register here</a></p>
     </body>
     </html>
 
