@@ -33,8 +33,6 @@ Based on the provided README.md, here's an improved version with corrections, en
   - [`traefik/traefik.yml`](#traefiktraefikyml)
   - [`traefik/dynamic.yml`](#traefikdynamicyml)
 - [Troubleshooting](#troubleshooting)
-- [Security Considerations](#security-considerations)
-- [Future Improvements](#future-improvements)
 
 ---
 
@@ -242,105 +240,53 @@ phpMyAdmin was included to provide a convenient web-based interface for managing
 
 Traefik's configuration is split into two files:
 
-### `traefik/traefik.yml`
 
-This file contains the static configuration for Traefik, such as entry points and providers.
+### `traefik/traefik.yml` - (the Static Configuration)
 
-```yaml
-# traefik/traefik.yml
-api:
-  dashboard: true
-  insecure: true
 
-entryPoints:
-  web:
-    address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-  websecure:
-    address: ":443"
+*   **API and Dashboard:**
+    *   Enables the Traefik dashboard for monitoring and management.
+    *   `insecure: true`  This makes the dashboard accessible without authentication not good for security but as a shcool project it's ok.
 
-providers:
-  docker:
-    endpoint: "unix:///var/run/docker.sock"
-    exposedByDefault: false
-  file:
-    filename: /dynamic.yml
-    watch: true
+*   **Entry Points:**
+    *   `web`: Listens on port 80 (HTTP) and redirects all traffic to `websecure` (HTTPS). This ensures all communication is encrypted with TLS.
+    *   `websecure`: Listens on port 443 (HTTPS) for secure connections.
 
-certificatesResolvers:
-  myresolver:
-    file:
-      certFile: /run/secrets/localhost_crt
-      keyFile: /run/secrets/localhost_key
-```
+*   **Providers:**
+    *   `docker`:  Automatically discovers and configures routes for Docker containers.
+        *   `exposedByDefault: false`  means containers won't be exposed unless explicitly configured.
+    *   `file`:  Loads dynamic configuration from  `/dynamic.yml`  and watches for changes, allowing updates without restarting Traefik (depending also from the system and many other things).
 
-### `traefik/dynamic.yml`
+*   **Certificate Resolvers:**
+    *   `myresolver`: Defines how Traefik obtains SSL/TLS certificates. In this case, it loads certificates from local files (`/run/secrets/localhost_crt` and `/run/secrets/localhost_key`).
 
-This file contains the dynamic configuration for Traefik, such as routing rules for services.
 
-```yaml
-http:
-  routers:
-    web-router:
-      rule: "Host(`web.local`)"
-      entryPoints:
-        - websecure
-      middlewares:
-          - csrf
-      service: web-service
-      tls:
-        certResolver: myresolver
-    traefik-dashboard:
-      rule: "Host(`traefik.local`)"
-      entryPoints:
-        - websecure
-      service: api@internal
-      tls:
-        certResolver: myresolver
-    phpmyadmin-router:
-        rule: "Host(`pma.web.local`)"
-        entryPoints:
-            - websecure
-        service: phpmyadmin-service
-        tls:
-            certResolver: myresolver
-  middlewares:
-      csrf:
-          headers:
-              customFrameOptionsValue: SAMEORIGIN
-              stsSeconds: 315360000
-              stsIncludeSubdomains: true
-              stsPreload: true
-              forceSTSHeader: true
-              customRequestHeaders:
-                  X-Frame-Options: SAMEORIGIN
-                  X-Content-Type-Options: nosniff
-                  Referrer-Policy: same-origin
-                  Permissions-Policy: interest-cohort=()
-                  X-XSS-Protection: 1; mode=block
-  services:
-    web-service:
-      loadBalancer:
-        servers:
-          - url: "http://apache-php-app:80"
-    phpmyadmin-service:
-      loadBalancer:
-        servers:
-          - url: "http://phpmyadmin:80"
-  tls:
-    options:
-      default:
-        minVersion: VersionTLS13
-    certificatesResolvers:
-      myresolver:
-        file:
-          certFile: /run/secrets/localhost_crt
-          keyFile: /run/secrets/localhost_key
-```
+### `traefik/dynamic.yml` - Dynamic Configuration
 
+This file contains the routing rules and service definitions that can change without restarting Traefik:
+
+*   **HTTP Routers:** Define how incoming requests are routed to services based on hostnames and other criteria.
+    *   `web-router`: Routes traffic for  `web.local`  to the  `web-service`. It also enforces HTTPS using `websecure` entrypoint and applies the `csrf` middleware, and the `myresolver` for TLS certificate.
+    *   `traefik-dashboard`: Makes the Traefik dashboard accessible at  `traefik.local`  over HTTPS.
+    *   `phpmyadmin-router`: Routes traffic for `pma.web.local` to `phpmyadmin-service` and applies the `myresolver` for TLS certificate.
+
+*   **Middlewares:** Modifies requests and responses.
+    *   `csrf`:  Adds several security-related HTTP headers to protect against common web attacks like clickjacking, XSS, and others. it doesn't implement CSRF protection, it implements other security headers
+
+*   **Services:** Define the actual backend applications where the traffic is forwarded.
+    *   `web-service`:  Load balances traffic to the  `apache-php-app`  container running on port 80.
+    *   `phpmyadmin-service`:  Load balances traffic to the  `phpmyadmin`  container running on port 80.
+
+*   **TLS Options:**
+    *   `default`: Sets the default minimum TLS version to 1.3.
 
 In this file you will find most of the Traefik setting, the certificate and the required version of TLS, the load balancer the middle ware (just for fun), and all the routing for the webapp, dashboard and other 
+
+## Troubleshooting
+
+Many things. I never used a reverse proxy and had no knowledge of networking. It was a good experience, but from my point of view (that could be wrong, I'm human after all) it was way too rough. I passed most of my time reading the Traefik forum for how to implement a certificate or dynamic configuration, and most of the answers were in the 2.0 version, so most of the times it worked, but not always. These posts were some of the most helpful :
+
+https://community.traefik.io/t/traefik-not-serving-custom-ssl-certificate/19865/6
+https://community.traefik.io/t/using-traefik-as-a-reverse-proxy-with-certificates-signed-by-my-own-pki/23178/7
+
+Thanks to the Docker course and the little exercise, I had enough basics to make the docker-compose and Dockerfile without any big trouble (just some minor errors, but nothing major). The real trouble I had was with Traefik; the documentation was really not good enough. I had really many difficulties because of that. My post on SO was removed for the reason "it's not linked to programming", which is not wrong but not right either, anyway. A course on Traefik would have been good and on networking just the basic 2 hour would have been enough.
