@@ -339,6 +339,8 @@ http:
       myresolver:
         file:
           certFile: /run/secrets/localhost_crt
-          keyFile: /run/secrets/localhost_key```
+          keyFile: /run/secrets/localhost_key
+```
+
 
 In this file you will find most of the Traefik setting, the certificate and the required version of TLS, the load balancer the middle ware (just for fun), and all the routing for the webapp, dashboard and other 
