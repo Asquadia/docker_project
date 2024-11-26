@@ -1,11 +1,57 @@
-# dynamic.yml
-# TLS or Transport Layer Security is used to encrypt the data sent throught traefik the 
-# the Key file is the private key to the certificate and the crt is the signed certificate 
-# it could be "simpler" to have both of them in a pem file or maybe in a container ? like p12 but the last option may cost us space ...
-# more research are needed
-tls:
-  certificates:
-    - certFile: /run/secrets/localhost_crt
-      keyFile: /run/secrets/localhost_key
-      stores:
-        - default
+http:
+  routers:
+    web-router:
+      rule: "Host(`web.local`)"
+      entryPoints:
+        - websecure
+      middlewares:
+          - csrf
+      service: web-service
+      tls:
+        certResolver: myresolver
+    traefik-dashboard:
+      rule: "Host(`traefik.local`)"
+      entryPoints:
+        - websecure
+      service: api@internal
+      tls:
+        certResolver: myresolver
+    phpmyadmin-router:
+        rule: "Host(`pma.web.local`)"
+        entryPoints:
+            - websecure
+        service: phpmyadmin-service
+        tls:
+            certResolver: myresolver
+  middlewares:
+      csrf:
+          headers:
+              customFrameOptionsValue: SAMEORIGIN
+              stsSeconds: 315360000
+              stsIncludeSubdomains: true
+              stsPreload: true
+              forceSTSHeader: true
+              customRequestHeaders:
+                  X-Frame-Options: SAMEORIGIN
+                  X-Content-Type-Options: nosniff
+                  Referrer-Policy: same-origin
+                  Permissions-Policy: interest-cohort=()
+                  X-XSS-Protection: 1; mode=block
+  services:
+    web-service:
+      loadBalancer:
+        servers:
+          - url: "http://apache-php-app:80"
+    phpmyadmin-service:
+      loadBalancer:
+        servers:
+          - url: "http://phpmyadmin:80"
+  tls:
+    options:
+      default:
+        minVersion: VersionTLS13
+    certificatesResolvers:
+      myresolver:
+        file:
+          certFile: /run/secrets/localhost_crt
+          keyFile: /run/secrets/localhost_key

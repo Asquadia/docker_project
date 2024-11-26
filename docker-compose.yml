@@ -1,5 +1,4 @@
 services:
-  # the webapp
   web:
     build:
       context: .
@@ -7,10 +6,8 @@ services:
     image: my_web_image
     depends_on:
       db:
-    # we make sure to start the web service only if the database started healthy
         condition: service_healthy
     networks:
-    # connect to the docker network webnet so they can be communication from the DB, apache server and the riverse proxy (traefik)
       - webnet
     environment:
       MYSQL_HOST: db
@@ -18,19 +15,16 @@ services:
       MYSQL_USER_FILE: /run/secrets/db_user
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
     secrets:
-      # use of the docker secret as per the projecr requirement
       - db_user
       - db_password
     volumes:
-    # need to mount the html page
       - ./public-html/:/var/www/html/
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web-router.entrypoints=websecure"
       - "traefik.http.routers.web-router.tls=true"
       - "traefik.http.routers.web-router.rule=Host(`web.local`)"
-      - "traefik.http.routers.web-router.service=web-lb"
-      - "traefik.http.services.web-lb.loadbalancer.server.port=80"
+      - "traefik.http.services.web-service.loadbalancer.server.port=80"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]
       interval: 30s
@@ -62,6 +56,28 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  phpmyadmin:
+      depends_on:
+          db:
+            condition: service_healthy
+      image: phpmyadmin/phpmyadmin
+      restart: always
+      networks:
+          - webnet
+      environment:
+          PMA_HOST: db
+          PMA_USER_FILE: /run/secrets/db_user
+          PMA_PASSWORD_FILE: /run/secrets/db_password
+      secrets:
+          - db_user
+          - db_password
+      labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.phpmyadmin-router.entrypoints=websecure"
+          - "traefik.http.routers.phpmyadmin-router.tls=true"
+          - "traefik.http.routers.phpmyadmin-router.rule=Host(`pma.web.local`)"
+          - "traefik.http.services.phpmyadmin-service.loadbalancer.server.port=80"
 
   traefik:
     image: traefik:v3.0
