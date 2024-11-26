@@ -1,8 +1,11 @@
 # dynamic.yml
-
+# TLS or Transport Layer Security is used to encrypt the data sent throught traefik the 
+# the Key file is the private key to the certificate and the crt is the signed certificate 
+# it could be "simpler" to have both of them in a pem file or maybe in a container ? like p12 but the last option may cost us space ...
+# more research are needed
 tls:
   certificates:
-    - certFile: "/certs/localhost.crt"
-      keyFile: "/certs/localhost.key"
+    - certFile: /run/secrets/localhost_crt
+      keyFile: /run/secrets/localhost_key
       stores:
         - default
