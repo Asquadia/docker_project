@@ -1,5 +1,3 @@
-Based on the provided README.md, here's an improved version with corrections, enhancements, and all code in markdown format ready for copy-pasting. I've also added a few extra sections and clarifications that are usually helpful in a project's README.
-
 # Dockerized Web Application with Apache, PHP, MySQL, and Traefik
 
 ## Table of Contents
