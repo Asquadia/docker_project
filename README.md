@@ -33,8 +33,6 @@ Based on the provided README.md, here's an improved version with corrections, en
   - [`traefik/traefik.yml`](#traefiktraefikyml)
   - [`traefik/dynamic.yml`](#traefikdynamicyml)
 - [Troubleshooting](#troubleshooting)
-- [Security Considerations](#security-considerations)
-- [Future Improvements](#future-improvements)
 
 ---
 
@@ -283,3 +281,12 @@ This file contains the routing rules and service definitions that can change wit
     *   `default`: Sets the default minimum TLS version to 1.3.
 
 In this file you will find most of the Traefik setting, the certificate and the required version of TLS, the load balancer the middle ware (just for fun), and all the routing for the webapp, dashboard and other 
+
+## Troubleshooting
+
+Many things. I never used a reverse proxy and had no knowledge of networking. It was a good experience, but from my point of view (that could be wrong, I'm human after all) it was way too rough. I passed most of my time reading the Traefik forum for how to implement a certificate or dynamic configuration, and most of the answers were in the 2.0 version, so most of the times it worked, but not always. These posts were some of the most helpful :
+
+https://community.traefik.io/t/traefik-not-serving-custom-ssl-certificate/19865/6
+https://community.traefik.io/t/using-traefik-as-a-reverse-proxy-with-certificates-signed-by-my-own-pki/23178/7
+
+Thanks to the Docker course and the little exercise, I had enough basics to make the docker-compose and Dockerfile without any big trouble (just some minor errors, but nothing major). The real trouble I had was with Traefik; the documentation was really not good enough. I had really many difficulties because of that. My post on SO was removed for the reason "it's not linked to programming", which is not wrong but not right either, anyway. A course on Traefik would have been good and on networking just the basic 2 hour would have been enough.
